@@ -7,6 +7,21 @@ from datetime import datetime
 
 from yamc.providers import HttpProvider, PerformanceProvider, perf_checker, OperationalError
 
+# scoreboard meanings
+scoreboard_meanings = {
+    "_": "waiting_connection",
+    "S": "starting_up",
+    "R": "reading_request",
+    "W": "sending_reply",
+    "K": "keepalive_read",
+    "D": "dns_lookup",
+    "C": "closing_connection",
+    "L": "logging",
+    "G": "gracefully_finishing",
+    "I": "idle_cleanup",
+    ".": "open_slot",
+}
+
 
 class ModStatusProvider(HttpProvider, PerformanceProvider):
     """
@@ -23,20 +38,8 @@ class ModStatusProvider(HttpProvider, PerformanceProvider):
         """
         Parses the output of the Apache mod_status page.
         """
-        scoreboard_meanings = {
-            "_": "waiting_connection",
-            "S": "starting_up",
-            "R": "reading_request",
-            "W": "sending_reply",
-            "K": "keepalive_read",
-            "D": "dns_lookup",
-            "C": "closing_connection",
-            "L": "logging",
-            "G": "gracefully_finishing",
-            "I": "idle_cleanup",
-            ".": "open_slot",
-        }
 
+        # conversion functions for mod_status data
         conversion = {
             "CurrentTime": lambda x: datetime.strptime(x, self.date_format),
             "RestartTime": lambda x: datetime.strptime(x, self.date_format),
@@ -129,6 +132,8 @@ class ModStatusProvider(HttpProvider, PerformanceProvider):
 
         if not result.get("ServerVersion"):
             raise Exception("Cannot parse the Apache mod_status. The properry ServerVersion cannot be found.")
+
+        result["time"] = result["CurrentTime"].timestamp()
         self.log.debug(
             f'Apache mod_status parsed. ServerVersion={result["ServerVersion"]}, Server_Built={result["Server_Built"]}, '
             + f'ServerUptime={result["ServerUptime"]}'
