@@ -133,7 +133,6 @@ class ModStatusProvider(HttpProvider, PerformanceProvider):
         if not result.get("ServerVersion"):
             raise Exception("Cannot parse the Apache mod_status. The properry ServerVersion cannot be found.")
 
-        result["time"] = result["CurrentTime"].timestamp()
         self.log.debug(
             f'Apache mod_status parsed. ServerVersion={result["ServerVersion"]}, Server_Built={result["Server_Built"]}, '
             + f'ServerUptime={result["ServerUptime"]}'
