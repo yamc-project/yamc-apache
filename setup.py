@@ -26,6 +26,8 @@ install_requires = [
     "yamc_server>=2.0.5",
     "beautifulsoup4>=4.12.2",
     "setuptools_scm>=6.0.1",
+    "pandas>=2.0.2",
+    "apache-log-parser>=1.7.0",
 ]
 
 setup(
