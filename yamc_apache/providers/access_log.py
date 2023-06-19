@@ -14,13 +14,12 @@ from yamc.providers import PerformanceProvider, perf_checker, OperationalError
 from yamc.utils import Map
 
 
-numeric_types = [
+numeric_fields = [
     "time_s",
     "response_bytes",
     "response_bytes_clf",
     "time_us",
     "num_keepalives",
-    "time_received",
     "bytes_rx",
     "bytes_tx",
 ]
@@ -153,14 +152,12 @@ class AccessLogProvider(PerformanceProvider):
 
             if entries is not None:
                 data.data = pd.DataFrame(entries)
-                data.data["time_s"] = pd.to_numeric(data.data["time_s"], errors="coerce")
-                data.data = data.data.dropna(subset=["time_s"])
+                _fields = [x for x in data.data if x in numeric_fields]
+                if len(_fields) > 0:
+                    for nf in _fields:
+                        data.data[nf] = pd.to_numeric(data.data[nf], errors="coerce")
+                    data.data = data.data.dropna(subset=_fields)
                 data.updated_time = time.time()
-
-                #                 for nt in numeric_types:
-                #     if nt in data.data:
-                #         data.data[nt] = pd.to_numeric(data.data[nt], errors="coerce")
-                # data.data = data.data.dropna(subset=[x for x in numeric_types if x in data.data])
 
             else:
                 data.data = None
