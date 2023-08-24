@@ -31,18 +31,13 @@ def round_time_minutes(time, minutes):
     return rounded_time
 
 
-def find_entries(access_log, format, time_from, time_to, chunk_size=1024):
+def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024):
     """
     Search for log entries in an access log file based on a specified date and time.
     The date and time are rounded to the nearest minute based on the align_minutes parameter.
     The function returns a list of log entries that match the specified date and time.
     If no entries are found, the function returns None.
     """
-
-    log_parser = Parser(format)
-    if not "time_received" in log_parser.names:
-        raise Exception("The specified log format does not contain time field (%t).")
-
     with open(access_log, "rb") as f:
         start = 0
         end = os.path.getsize(access_log)
@@ -122,11 +117,16 @@ class AccessLogProvider(PerformanceProvider):
     def __init__(self, config, component_id):
         PerformanceProvider.__init__(self, config, component_id)
         self.format = self.config.value("format", required=True)
+        self.log_parser = Parser(self.format)
         self.access_log = self.config.value("access_log", required=True)
         self.simulated_time = self.config.value("simulated_time.start", default=None)
         self.simulated_time_delta = self.config.value("simulated_time.delta", default=1)
         self.simulated_time_format = self.config.value("simulated_time.format", default="%Y-%m-%d %H:%M:%S")
         self._time = None
+        if not "time_received" in self.log_parser.names:
+            raise Exception("The specified log format does not contain time field (%t).")
+        if not "time_s" in self.log_parser.names and not "time_us" in self.log_parser.names:
+            raise Exception("The specified log format does not contain response time field (%D or %T).")
 
     def time(self):
         if self.simulated_time is not None:
@@ -148,7 +148,7 @@ class AccessLogProvider(PerformanceProvider):
         if data.data is None or _time > data.time_to:
             data.time_from = round_time_minutes(_time - datetime.timedelta(minutes=time_delta), time_delta)
             data.time_to = round_time_minutes(_time, time_delta)
-            entries = find_entries(self.access_log, self.format, data.time_from, data.time_to)
+            entries = find_entries(self.access_log, self.log_parser, data.time_from, data.time_to)
 
             if entries is not None:
                 data.data = pd.DataFrame(entries)
