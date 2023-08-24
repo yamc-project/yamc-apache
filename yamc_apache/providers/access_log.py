@@ -171,7 +171,7 @@ class AccessLogProvider(PerformanceProvider):
     def stats(self, id, time_delta=1, group=None, stats_def=None, filters=None):
         self.update(id=id, time_delta=time_delta)
         if self.data[id].data is None:
-            return None
+            return []
 
         df = self.data[id].data.copy()
         grouped_df = df.groupby(group)
