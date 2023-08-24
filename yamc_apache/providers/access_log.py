@@ -7,7 +7,7 @@ import sys
 import pandas as pd
 import json
 
-from apache_log_parser import Parser, apachetime
+from apache_log_parser import Parser, apachetime, LineDoesntMatchException
 import datetime
 
 from yamc.providers import PerformanceProvider, perf_checker, OperationalError
@@ -31,7 +31,7 @@ def round_time_minutes(time, minutes):
     return rounded_time
 
 
-def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024):
+def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024, parser_errors_threshold=0.2):
     """
     Search for log entries in an access log file based on a specified date and time.
     The date and time are rounded to the nearest minute based on the align_minutes parameter.
@@ -59,7 +59,11 @@ def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024):
             chunk_pos = pos + len(lines[0]) + 1
 
             for l in lines[1:-1]:
-                parts = log_parser.parse(l)
+                try:
+                    parts = log_parser.parse(l)
+                except LineDoesntMatchException as e:
+                    continue
+
                 dt = parts["time_received_datetimeobj"]
                 if time_from <= dt:
                     first_pos = chunk_pos
@@ -85,6 +89,8 @@ def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024):
         reminder = ""
         done = False
         entries = []
+        num_errors = 0
+        num_lines = 0
 
         while not done:
             chunk = f.read(chunk_size).decode("utf-8")
@@ -95,7 +101,12 @@ def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024):
                 lines[0:-1] if has_reminder else lines[0:]
             ):  # if last line is not complete, we need to keep it for the next chunk
                 if l != "":
-                    parts = log_parser.parse(l)
+                    try:
+                        parts = log_parser.parse(l)
+                        num_lines += 1
+                    except LineDoesntMatchException as e:
+                        num_errors += 1
+                        continue
                     # dt = _align_time(parts["time_received_datetimeobj"], align_minutes)
                     if parts["time_received_datetimeobj"] < time_to:
                         entries.append(parts)
@@ -105,6 +116,11 @@ def find_entries(access_log, log_parser, time_from, time_to, chunk_size=1024):
 
             reminder = lines[-1] if has_reminder else ""
             done = done or len(chunk) < chunk_size
+
+    if num_lines > 0 and num_errors / num_lines > parser_errors_threshold:
+        raise OperationalError(
+            f"Too many errors ({(num_errors/num_lines)*100:.2f}%) when parsing log entries. Check the log format."
+        )
 
     return entries
 
