@@ -188,15 +188,15 @@ class AccessLogProvider(PerformanceProvider):
         self.update(id=id, time_delta=time_delta)
         if self.data[id].data is None:
             return []
-
         df = self.data[id].data.copy()
-        grouped_df = df.groupby(group)
 
         if filters:
             filter_condition = df.apply(
                 lambda row: any(all(row[k] == v for k, v in f.items() if k in row) for f in filters), axis=1
             )
             df = df[filter_condition]
+
+        grouped_df = df.groupby(group)
 
         result = []
         for group_key, _group in grouped_df:
