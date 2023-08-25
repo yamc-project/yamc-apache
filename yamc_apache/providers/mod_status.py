@@ -151,4 +151,4 @@ class ModStatusProvider(HttpProvider, PerformanceProvider):
                 self.mod_status["name"] = name
             return self.mod_status
         except Exception as e:
-            raise OperationalError("Cannot get data from Apache mod_status page: %s" % e)
+            raise OperationalError("Cannot get data from Apache mod_status page: %s" % e, e)
