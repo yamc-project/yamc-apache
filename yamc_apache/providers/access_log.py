@@ -144,6 +144,10 @@ class AccessLogProvider(PerformanceProvider):
         if not "time_s" in self.log_parser.names and not "time_us" in self.log_parser.names:
             raise Exception("The specified log format does not contain response time field (%D or %T).")
 
+    @property
+    def source(self):
+        return self.access_log
+
     def time(self):
         if self.simulated_time is not None:
             if self._time is None:
