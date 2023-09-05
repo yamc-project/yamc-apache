@@ -11,6 +11,7 @@ from apache_log_parser import Parser, apachetime, LineDoesntMatchException
 import datetime
 
 from yamc.providers import PerformanceProvider, perf_checker, OperationalError
+from yamc.component import ValidationError
 from yamc.utils import Map
 
 
@@ -140,9 +141,9 @@ class AccessLogProvider(PerformanceProvider):
         self.simulated_time_format = self.config.value("simulated_time.format", default="%Y-%m-%d %H:%M:%S")
         self._time = None
         if not "time_received" in self.log_parser.names:
-            raise Exception("The specified log format does not contain time field (%t).")
+            raise ValidationError("The specified log format does not contain time field (%t).")
         if not "time_s" in self.log_parser.names and not "time_us" in self.log_parser.names:
-            raise Exception("The specified log format does not contain response time field (%D or %T).")
+            raise ValidationError("The specified log format does not contain response time field (%D or %T).")
 
     @property
     def source(self):
