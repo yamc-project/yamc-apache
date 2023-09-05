@@ -29,8 +29,7 @@ class ModStatusProvider(HttpProvider, PerformanceProvider):
     """
 
     def __init__(self, config, component_id):
-        HttpProvider.__init__(self, config, component_id)
-        PerformanceProvider.__init__(self, config, component_id)
+        super().__init__(config, component_id)
         self.date_format = self.config.value("date_format", default="%A, %d-%b-%Y %H:%M:%S %Z")
         self.mod_status = None
 

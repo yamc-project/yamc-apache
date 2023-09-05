@@ -132,7 +132,7 @@ class AccessLogProvider(PerformanceProvider):
     """
 
     def __init__(self, config, component_id):
-        PerformanceProvider.__init__(self, config, component_id)
+        super().__init__(config, component_id)
         self.format = self.config.value("format", required=True)
         self.log_parser = Parser(self.format)
         self.access_log = self.config.value("access_log", required=True)
